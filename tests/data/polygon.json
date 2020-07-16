@@ -1,0 +1,59 @@
+{
+  "type": "FeatureCollection",
+  "bbox": [0, -1, 10.5, 11.5],
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {
+        "id": 123,
+        "string": "test",
+        "int": 456,
+        "float": 34.123,
+        "date": "2020-07-15"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "bbox": [0, 2, 10.5, 11.5],
+        "coordinates": [
+          [
+            [0.0, 11.5],
+            [10.5, 11.5],
+            [10.5, 2.0],
+            [7.0, 8.5],
+            [0.0, 11.5]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+
+      "properties": {
+        "id": 2,
+        "string": "Example",
+        "int": 5,
+        "float": 1.0,
+        "date": "1989-02-09"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "bbox": [0, -1, 10.5, 10.5],
+        "coordinates": [
+          [
+            [0.0, 1.0],
+            [0.0, 10.5],
+            [10.5, -1.0],
+            [0.0, 1.0]
+          ],
+          [
+            [3.5, 5.3],
+            [1.5, 4.0],
+            [3.2, 1.8],
+            [4.8, 3.2],
+            [3.5, 5.3]
+          ]
+        ]
+      }
+    }
+  ]
+}

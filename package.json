@@ -1,0 +1,33 @@
+{
+  "name": "shpfile",
+  "version": "0.1.0",
+  "description": "A pure (no dependency) JavaScript shapefile reader.",
+  "main": "./lib/cjs/index.js",
+  "module": "./lib/esm/index.js",
+  "repository": "https://github.com/oats-group/shapefile.js",
+  "author": "Andrew Balmos <abalmos@purdue.edu>",
+  "license": "MIT",
+  "private": false,
+  "files": [
+    "lib/"
+  ],
+  "scripts": {
+    "build": "tsc && yarn run build:cjs",
+    "build:cjs": "tsc --module commonjs --target es5 --outDir lib/cjs",
+    "watch": "tsc --watch",
+    "test": "jest",
+    "lint": "eslint ./src",
+    "prepublish": "yarn run build"
+  },
+  "devDependencies": {
+    "@types/geojson": "^7946.0.7",
+    "@types/jest": "^26.0.4",
+    "@typescript-eslint/eslint-plugin": "^3.6.1",
+    "@typescript-eslint/parser": "^3.6.1",
+    "eslint": "^7.4.0",
+    "jest": "^26.1.0",
+    "prettier": "^2.0.5",
+    "ts-jest": "^26.1.2",
+    "typescript": "^3.9.6"
+  }
+}
