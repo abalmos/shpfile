@@ -1,26 +1,26 @@
-interface Field {
+export interface Field {
   name: string;
   type: string;
   length: number;
   decimalLength: number;
 }
 
-type Property = string | number | boolean | Date | undefined;
-type Properties = Record<string, Property>;
+export type Property = string | number | boolean | Date | undefined;
+export type Properties = { [key: string]: Property };
 
-export interface XBaseRecord {
+export interface Record {
   isDeleted: boolean;
   properties: Properties;
 }
 
-export class XBase {
+export class DBF {
   public version: number;
   public date: Date;
 
   public numRecords: number;
   public lenHeader: number;
   public lenRecord: number;
-  public fields: Array<Field> = [];
+  public fields: Field[] = [];
 
   private dbf: DataView;
   private enc: TextDecoder;
@@ -64,13 +64,14 @@ export class XBase {
     }
   }
 
-  record(idx: number): XBaseRecord {
+  record(idx: number): Record {
     let offset = this.lenHeader + idx * this.lenRecord;
 
     const isDeleted = this.dbf.getUint8(offset) == 84 ? true : false;
 
     offset++;
 
+    // All values are stored as strings in DBF, convert to actual data type
     const properties: Properties = {};
     this.fields.forEach((field) => {
       const raw = this.enc
@@ -116,10 +117,7 @@ export class XBase {
     };
   }
 
-  records(): XBaseRecord[] {
-    // TODO: Would it be better to just run down the file directly here?
-    //       This is better then .shp case because we can directly compute the
-    //       starting point for the "i-th" record.
+  records(): Record[] {
     const records = new Array(this.numRecords);
     for (let i = 0; i < this.numRecords; i++) {
       records[i] = this.record(i);

@@ -1,6 +1,6 @@
 import { readFileSync } from 'fs';
 import { Shapefile } from '../src/shapefile';
-import { Polygon } from '../src/shapes/Polygon';
+import { Polygon } from '../src/shp/Polygon';
 import polygonGeoJSON from './data/polygon.json';
 
 test('Reading a polygon shapefile header', () => {
