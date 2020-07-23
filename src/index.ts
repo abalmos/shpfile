@@ -1,1 +1,1 @@
-export { Shapefile } from './shapefile';
+export { Shapefile } from './Shapefile';

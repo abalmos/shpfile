@@ -1,28 +1,20 @@
-// TODO: Move to just ./shapes/index.ts' ?
-import { Shape, CodeShape } from './Shape';
+import { CodeShape, ShapeType, Shapes } from '.';
+import { BBoxXYZ } from '.';
+import { Shape } from './Shape';
 import { Polygon } from './Polygon';
 
 import * as GeoJSON from 'geojson';
-
-interface BBox {
-  xmin: number;
-  xmax: number;
-  ymin: number;
-  ymax: number;
-  zmin: number;
-  zmax: number;
-  mmin: number;
-  mmax: number;
-}
 
 export class SHP {
   private shp: DataView;
 
   readonly type: number;
-  readonly typeName: string;
+  readonly typeName: ShapeType;
   readonly fileLen: number;
 
-  readonly bbox: BBox;
+  readonly bbox: Readonly<BBoxXYZ>;
+  readonly mmin: number;
+  readonly mmax: number;
 
   constructor(buf: ArrayBuffer) {
     this.shp = new DataView(buf);
@@ -53,13 +45,45 @@ export class SHP {
       ymax: this.shp.getFloat64(60, true),
       zmin: this.shp.getFloat64(68, true),
       zmax: this.shp.getFloat64(76, true),
-      mmin: this.shp.getFloat64(84, true),
-      mmax: this.shp.getFloat64(92, true),
     };
+
+    this.mmin = this.shp.getFloat64(84, true);
+    this.mmax = this.shp.getFloat64(92, true);
   }
 
   // NOTE: We index from 0, shapefiles index from 1
-  shape(idx: number): Polygon | undefined {
+  shape(idx: number): Polygon {
+    const offset = this.getShapeOffset(idx);
+
+    if (!offset) {
+      throw new Error(`Shape ${idx} does not exist in SHP file`);
+    }
+
+    // TODO: Move all this into a Shape.from(...): Point | Polygon | PolyLine | ... ?
+    // TODO: `position` should live in the shape
+    const p = this.shp.getUint32(offset);
+    const dv = new DataView(
+      this.shp.buffer,
+      offset + 8, // Start of shape
+      2 * this.shp.getUint32(offset + 4) // Shape length
+    );
+
+    // TODO: Have to handle all the shape types
+    return new Polygon(p, dv);
+  }
+
+  // TODO: Would it be better to just run down the file directly here?
+  shapes(): Shapes[] {
+    const shapes: Shapes[] = [];
+    // FIXME: TODO: This is a hack to stop at the right stop
+    while (this.getShapeOffset(shapes.length)) {
+      shapes.push(this.shape(shapes.length));
+    }
+
+    return shapes;
+  }
+
+  private getShapeOffset(idx: number): number | undefined {
     if (idx < 0) {
       throw new Error('Request shape index out of bounds');
     }
@@ -77,30 +101,12 @@ export class SHP {
       return;
     }
 
-    const p = this.shp.getUint32(offset);
-    const dv = new DataView(
-      this.shp.buffer,
-      offset + 8, // Start of shape
-      2 * this.shp.getUint32(offset + 4) // Shape length
-    );
-
-    return new Polygon(p, dv);
+    return offset;
   }
 
-  // TODO: Would it be better to just run down the file directly here?
-  shapes(): Shape[] {
-    const shapes: Shape[] = [];
-    let shape;
-    while ((shape = this.shape(shapes.length))) {
-      shapes.push(shape);
-    }
-
-    return shapes;
-  }
-
-  asJson(): GeoJSON.FeatureCollection {
+  asGeoJson(): GeoJSON.FeatureCollection {
     // Convert each shape into a GeoJSON
-    const features = this.shapes().map((s) => s.asJson());
+    const features = this.shapes().map((s) => s.asGeoJson());
 
     // Convert to GeoJSON bbox array
     let bbox: GeoJSON.BBox;

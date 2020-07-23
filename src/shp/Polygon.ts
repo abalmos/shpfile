@@ -1,14 +1,12 @@
 import * as GeoJSON from 'geojson';
-import { Shape, ShapeType, ShapeCode } from './Shape';
+import { ShapeCode } from '.';
+import { Shape } from './Shape';
+import { BBoxXY } from '.';
 
 export class Polygon extends Shape {
-  type: ShapeType;
-  position: number;
+  readonly type = 'Polygon';
 
-  readonly xmin: number;
-  readonly xmax: number;
-  readonly ymin: number;
-  readonly ymax: number;
+  readonly bbox: Readonly<BBoxXY>;
   readonly parts: [number, number][][];
 
   constructor(position: number, dv: DataView) {
@@ -18,13 +16,12 @@ export class Polygon extends Shape {
       throw new Error('Not a Polygon shape!');
     }
 
-    this.type = 'Polygon';
-    this.position = position;
-
-    this.xmin = dv.getFloat64(4, true);
-    this.ymin = dv.getFloat64(12, true);
-    this.xmax = dv.getFloat64(20, true);
-    this.ymax = dv.getFloat64(28, true);
+    this.bbox = {
+      xmin: dv.getFloat64(4, true),
+      ymin: dv.getFloat64(12, true),
+      xmax: dv.getFloat64(20, true),
+      ymax: dv.getFloat64(28, true),
+    };
 
     // Fetch shape parts
     const numParts = dv.getUint32(36, true);
@@ -58,12 +55,12 @@ export class Polygon extends Shape {
     }
   }
 
-  asJson(): GeoJSON.Feature<GeoJSON.Polygon> {
+  asGeoJson(): GeoJSON.Feature<GeoJSON.Polygon> {
     return {
       type: 'Feature',
       geometry: {
         type: 'Polygon',
-        bbox: [this.xmin, this.ymin, this.xmax, this.ymax],
+        bbox: [this.bbox.xmin, this.bbox.ymin, this.bbox.xmax, this.bbox.ymax],
         coordinates: this.parts,
       },
       properties: {},

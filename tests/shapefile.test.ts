@@ -1,5 +1,5 @@
 import { readFileSync } from 'fs';
-import { Shapefile } from '../src/shapefile';
+import { Shapefile } from '../src/Shapefile';
 import { Polygon } from '../src/shp/Polygon';
 import polygonGeoJSON from './data/polygon.json';
 
@@ -8,16 +8,15 @@ test('Reading a polygon shapefile header', () => {
     new Uint8Array(readFileSync('tests/data/polygon.shp')).buffer
   );
 
-  expect(s.xmin).toEqual(0);
-  expect(s.xmax).toEqual(10.5);
-  expect(s.ymin).toEqual(-1);
-  expect(s.ymax).toEqual(11.5);
-  expect(s.zmax).toEqual(0);
-  expect(s.zmin).toEqual(0);
-  expect(s.mmax).toEqual(0);
-  expect(s.mmin).toEqual(0);
-  expect(s.type).toEqual(5);
-  expect(s.typeName).toEqual('Polygon');
+  expect(s.bbox).toEqual({
+    xmin: 0,
+    xmax: 10.5,
+    ymin: -1,
+    ymax: 11.5,
+    zmax: 0,
+    zmin: 0,
+  });
+  expect(s.type).toEqual('Polygon');
 });
 
 test('Load and verify a single part polygon', () => {
@@ -27,10 +26,16 @@ test('Load and verify a single part polygon', () => {
 
   const r = s.shape(0);
 
-  expect(r.xmin).toEqual(0);
-  expect(r.xmax).toEqual(10.5);
-  expect(r.ymin).toEqual(2);
-  expect(r.ymax).toEqual(11.5);
+  if (r.type !== 'Polygon') {
+    throw new Error('Not type Polygon');
+  }
+
+  expect(r.bbox).toEqual({
+    xmin: 0,
+    xmax: 10.5,
+    ymin: 2,
+    ymax: 11.5,
+  });
   expect(r.type).toEqual('Polygon');
   expect(r.parts).toEqual([
     [
@@ -50,10 +55,16 @@ test('Load and verify a multi-part polygon', () => {
 
   const r = s.shape(1);
 
-  expect(r.xmin).toEqual(0);
-  expect(r.xmax).toEqual(10.5);
-  expect(r.ymin).toEqual(-1);
-  expect(r.ymax).toEqual(10.5);
+  if (r.type !== 'Polygon') {
+    throw new Error('Excepted shape to be Polygon');
+  }
+
+  expect(r.bbox).toEqual({
+    xmin: 0,
+    xmax: 10.5,
+    ymin: -1,
+    ymax: 10.5,
+  });
   expect(r.type).toEqual('Polygon');
   expect(r.parts).toEqual([
     [
@@ -77,23 +88,24 @@ test('Get all shapes from a Polygon', () => {
     new Uint8Array(readFileSync('tests/data/polygon.shp')).buffer
   );
 
-  const shapes = s.shapes();
-
-  expect(shapes).toHaveLength(2);
-  expect(shapes[0]).toBeInstanceOf(Polygon);
-  expect(shapes[0].position).toEqual(1);
-  expect(shapes[1]).toBeInstanceOf(Polygon);
-  expect(shapes[1].position).toEqual(2);
+  expect(s.shapes).toHaveLength(2);
+  expect(s.shapes[0]).toBeInstanceOf(Polygon);
+  expect(s.shapes[0].position).toEqual(1);
+  expect(s.shapes[1]).toBeInstanceOf(Polygon);
+  expect(s.shapes[1].position).toEqual(2);
 });
 
-test.skip('Export polygon shapefile as GeoJSON', () => {
+test('Export polygon shapefile as GeoJSON', () => {
   const s = new Shapefile(
-    new Uint8Array(readFileSync('tests/data/polygon.shp')).buffer
+    new Uint8Array(readFileSync('tests/data/polygon.shp')).buffer,
+    new Uint8Array(readFileSync('tests/data/polygon.dbf')).buffer
   );
 
-  const json = s.asJson();
+  const geoJson = s.asGeoJson();
 
-  expect(json).toEqual(polygonGeoJSON);
+  // Verify the string serialized version matches (the object has things
+  // like Date in them)
+  expect(JSON.parse(JSON.stringify(geoJson))).toEqual(polygonGeoJSON);
 });
 
 test('Get Polygon shapeRecord', () => {
@@ -101,9 +113,38 @@ test('Get Polygon shapeRecord', () => {
     new Uint8Array(readFileSync('tests/data/polygon.shp')).buffer,
     new Uint8Array(readFileSync('tests/data/polygon.dbf')).buffer
   );
-  console.log(s.fields());
 
   const sr = s.shapeRecord(0);
 
-  console.log(sr);
+  const sh = sr.shape;
+  const r = sr.record;
+
+  if (sh.type !== 'Polygon') {
+    throw new Error('Not type Polygon');
+  }
+
+  expect(sh.bbox).toEqual({
+    xmin: 0,
+    xmax: 10.5,
+    ymin: 2,
+    ymax: 11.5,
+  });
+  expect(sh.type).toEqual('Polygon');
+  expect(sh.parts).toEqual([
+    [
+      [0, 11.5],
+      [10.5, 11.5],
+      [10.5, 2],
+      [7, 8.5],
+      [0, 11.5],
+    ],
+  ]);
+
+  expect(r.position).toEqual(1);
+  expect(r.isDeleted).toEqual(false);
+  expect(r.properties.id).toEqual(123);
+  expect(r.properties.string).toEqual('test');
+  expect(r.properties.int).toEqual(456);
+  expect(r.properties.float).toEqual(34.123);
+  expect(r.properties.date).toEqual(new Date(2020, 6, 15));
 });

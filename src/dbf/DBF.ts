@@ -9,6 +9,7 @@ export type Property = string | number | boolean | Date | undefined;
 export type Properties = { [key: string]: Property };
 
 export interface Record {
+  position: number;
   isDeleted: boolean;
   properties: Properties;
 }
@@ -75,7 +76,7 @@ export class DBF {
     const properties: Properties = {};
     this.fields.forEach((field) => {
       const raw = this.enc
-        .decode(this.dbf.buffer.slice(offset, offset + field.decimalLength))
+        .decode(this.dbf.buffer.slice(offset, offset + field.length))
         .trim();
 
       let value: Property;
@@ -86,7 +87,7 @@ export class DBF {
 
         case 'N':
         case 'F':
-          value = parseInt(raw) / Math.pow(10, field.decimalLength);
+          value = parseFloat(raw);
           break;
 
         case 'D':
@@ -112,6 +113,7 @@ export class DBF {
     }, {});
 
     return {
+      position: idx + 1,
       isDeleted,
       properties,
     };

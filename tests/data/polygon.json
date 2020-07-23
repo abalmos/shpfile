@@ -9,7 +9,7 @@
         "string": "test",
         "int": 456,
         "float": 34.123,
-        "date": "2020-07-15"
+        "date": "2020-07-15T04:00:00.000Z"
       },
       "geometry": {
         "type": "Polygon",
@@ -33,7 +33,7 @@
         "string": "Example",
         "int": 5,
         "float": 1.0,
-        "date": "1989-02-09"
+        "date": "1989-02-09T05:00:00.000Z"
       },
       "geometry": {
         "type": "Polygon",
