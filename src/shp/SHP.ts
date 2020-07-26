@@ -1,6 +1,5 @@
 import { CodeShape, ShapeType, Shapes } from '.';
 import { BBoxXYZ } from '.';
-import { Shape } from './Shape';
 import { Polygon } from './Polygon';
 
 import * as GeoJSON from 'geojson';

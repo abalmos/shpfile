@@ -7,7 +7,7 @@ export class Polygon extends Shape {
   readonly type = 'Polygon';
 
   readonly bbox: Readonly<BBoxXY>;
-  readonly parts: [number, number][][];
+  readonly polygons: [number, number][][][];
 
   constructor(position: number, dv: DataView) {
     super(position);
@@ -32,9 +32,10 @@ export class Polygon extends Shape {
     }
 
     // Fetch shape points
+    let polygon: Array<[number, number][]> = [];
     const numPoints = dv.getUint32(40, true);
     const pointsOffset = partOffset + 4 * numParts;
-    this.parts = new Array(numParts);
+    this.polygons = [];
 
     // Read the points, part by part
     for (let part = 0; part < numParts; part++) {
@@ -42,7 +43,7 @@ export class Polygon extends Shape {
       const stop = parts[part + 1] || numPoints;
       const partLen = stop - start;
 
-      const points = new Array(partLen);
+      const points: [number, number][] = new Array(partLen);
       for (let i = 0; i < partLen; i++) {
         const offset = pointsOffset + 8 * 2 * (i + start);
         points[i] = [
@@ -51,19 +52,58 @@ export class Polygon extends Shape {
         ];
       }
 
-      this.parts[part] = points;
+      if (this.signedArea(points) < 0 && polygon.length) {
+        this.polygons.push(polygon);
+        polygon = [];
+      }
+
+      polygon.push(points);
     }
+    this.polygons.push(polygon);
   }
 
-  asGeoJson(): GeoJSON.Feature<GeoJSON.Polygon> {
-    return {
-      type: 'Feature',
-      geometry: {
-        type: 'Polygon',
-        bbox: [this.bbox.xmin, this.bbox.ymin, this.bbox.xmax, this.bbox.ymax],
-        coordinates: this.parts,
-      },
-      properties: {},
-    };
+  private signedArea(part: number[][]): number {
+    let sum = 0;
+    // TODO: starging at 1 and going length - 1 is wrong
+    for (let i = 0; i < part.length - 1; i++) {
+      sum += part[i][0] * part[i + 1][1] - part[i + 1][0] * part[i][1];
+      // sum += part[i][0] + (part[i + 1][1] - part[i - 1][1]);
+    }
+
+    return sum / 2;
+  }
+
+  asGeoJson(): GeoJSON.Feature<GeoJSON.Polygon | GeoJSON.MultiPolygon> {
+    if (this.polygons.length > 1) {
+      return {
+        type: 'Feature',
+        geometry: {
+          type: 'MultiPolygon',
+          bbox: [
+            this.bbox.xmin,
+            this.bbox.ymin,
+            this.bbox.xmax,
+            this.bbox.ymax,
+          ],
+          coordinates: this.polygons,
+        },
+        properties: {},
+      };
+    } else {
+      return {
+        type: 'Feature',
+        geometry: {
+          type: 'Polygon',
+          bbox: [
+            this.bbox.xmin,
+            this.bbox.ymin,
+            this.bbox.xmax,
+            this.bbox.ymax,
+          ],
+          coordinates: this.polygons[0],
+        },
+        properties: {},
+      };
+    }
   }
 }

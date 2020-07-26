@@ -2,7 +2,7 @@
   "name": "shpfile",
   "version": "0.1.0",
   "description": "A pure (no dependency) JavaScript shapefile reader.",
-  "main": "./lib/cjs/index.js",
+  "main": "./lib/esm/index.js",
   "module": "./lib/esm/index.js",
   "repository": "https://github.com/oats-group/shapefile.js",
   "author": "Andrew Balmos <abalmos@purdue.edu>",

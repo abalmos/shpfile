@@ -1,12 +1,9 @@
 import { ShapeType, BBoxXY, BBoxXYZ, Shapes } from './shp';
-import { Shape } from './shp/Shape';
 
 import * as GeoJSON from 'geojson';
 import { DBF, Record, Field } from './dbf/DBF';
 import { SHP } from './shp/SHP';
 import { ShapeRecord } from './ShapeRecord';
-import { Polygon } from './shp/Polygon';
-import { Point } from './shp/Point';
 
 export class Shapefile {
   private shp: SHP | undefined;
